@@ -1,0 +1,5 @@
+deploy:
+  - name: deploy keycloak
+    command: |
+      # deploy it this way so we can set the hostname dynamically
+      okteto deploy -f docker-compose.yaml --var KC_HOSTNAME=keycloak-$OKTETO_NAMESPACE.$OKTETO_DOMAIN

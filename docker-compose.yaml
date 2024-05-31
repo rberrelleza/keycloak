@@ -1,0 +1,44 @@
+services:
+  postgres-db:
+    image: postgres:16
+    volumes:
+      - keycloak-postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: ${POSTGRES_USER:-keycloak}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-okteto123!}
+    ports:
+      - 5432
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.6
+    environment:
+      KC_LOG_LEVEL: debug
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres-db:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER:-keycloak}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-okteto123!}
+      KC_DB_SCHEMA: public
+      KC_HOSTNAME: ${KC_HOSTNAME:-keycloak.example.com}
+      KC_HOSTNAME_STRICT_HTTPS: true
+      KC_HOSTNAME_STRICT: true
+      KC_PROXY_ADDRESS_FORWARDING: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-okteto123!}
+      KEYCLOAK_ENABLE_HEALTH_ENDPOINTS: "true"
+    command: start
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres-db
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+
+volumes:
+  keycloak-postgres:
